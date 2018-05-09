@@ -1,5 +1,9 @@
 import React, { Component } from 'react';
 import { StyleSheet, View, Image, Text, Button } from 'react-native'
+import { bindActionCreators } from 'redux'
+import { connect } from 'react-redux'
+import { getGif } from '../store/gif/actions'
+import store from '../store/index'
 import axios from 'axios'
 
 class Gif extends Component {
@@ -10,51 +14,80 @@ class Gif extends Component {
     }
   }
   componentDidMount() {
-    this.getGif()
+    this.props.getGif()
   }
   getGif = () => {
-    axios.get('https://api.giphy.com/v1/gifs/random?api_key=SFS527rWxCUfBNK4b2xibHg5zvJyxsQD&tag=funny&rating=G')
-    .then(response => {
-      this.setState({
-        gif: response.data.data
-      })
-    })
+    this.props.getGif()
   }
   render() {
-    return (
-      <View style={styles.image}>
-        <Image
-          style={{
-            width: +this.state.gif.fixed_height_downsampled_width,
-            height: +this.state.gif.fixed_height_downsampled_height
-          }}
-          source={{uri: `${this.state.gif.image_url}`}}
-        />
-        <Text style={{
-          fontSize: 20
-        }}>{this.state.gif.title}</Text>
-        <Button
-          onPress={this.getGif}
-          title="Click to get random gif"
-          color="#841584"
-        />
-      </View>
-    );
+    if(this.props.gif.loading === true){
+      return (
+        <View>
+          <Text>Loading . . . </Text>
+          <Button
+            onPress={this.getGif}
+            title="Click to get random gif"
+            color="#841584"
+          />
+        </View>
+      )
+    } else if(this.props.gif.error.status === true){
+      return (
+        <View>
+          <Text>{this.props.gif.error.message}</Text>
+          <Button
+            onPress={this.getGif}
+            title="Click to get random gif"
+            color="#841584"
+          />
+        </View>
+      )
+    } else {
+      return (
+        <View style={styles.container}>
+          <View style={styles.image}>
+            <Image
+              style={{
+                width: +this.props.gif.data.fixed_height_downsampled_width,
+                height: +this.props.gif.data.fixed_height_downsampled_height
+              }}
+              source={{uri: `${this.props.gif.data.image_url}`}}
+            />
+            <Text style={{
+              fontSize: 20
+            }}>{this.props.gif.data.title}</Text>
+          </View>
+            <Button
+              onPress={this.getGif}
+              title="Click to get random gif"
+              color="#841584"
+            />
+        </View>
+      )
+    }
   }
 }
 
 const styles = StyleSheet.create({
-  image: {
+  container: {
     flex: 1,
-    backgroundColor: '#fff',
     alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderStyle: 'dotted',
-    backgroundColor: 'azure',
-    borderColor: 'grey',
-    borderRadius: 12,
+    justifyContent: 'center'
+  },
+  image: {
+    alignItems: 'center'
   },
 });
 
-export default Gif;
+const mapStateToProps = (state) => ({
+  gif: state.gif
+})
+
+const mapDispatchToProps = (dispatch) => bindActionCreators({
+  getGif
+}, dispatch)
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Gif)
